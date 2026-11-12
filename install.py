@@ -15,13 +15,18 @@ def install(destination=None):
         raise SystemExit("Cannot find bundled skills/fishing-gif/SKILL.md")
     if target == source.resolve():
         raise SystemExit("Source and installation directory must differ.")
+    backup = None
     if target.exists():
         backup = codex / "skill-backups" / ("fishing-gif-" + datetime.now().strftime("%Y%m%d-%H%M%S-%f"))
         backup.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(target), str(backup))
         print(f"Previous installation preserved: {backup}")
     target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source, target, ignore=shutil.ignore_patterns(".venv", "__pycache__", "*.pyc", "*.sqlite3", "*.sqlite3-*"))
+    shutil.copytree(source, target, ignore=shutil.ignore_patterns(".venv", ".sam2-env", "__pycache__", "*.pyc", "*.sqlite3", "*.sqlite3-*", "*.pt"))
+    if backup is not None:
+        for name in (".venv", ".sam2-env"):
+            if (backup / name).is_dir():
+                shutil.move(str(backup / name), str(target / name))
     print(f"Installed: {target}")
     return target
 

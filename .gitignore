@@ -6,3 +6,6 @@ __pycache__/
 test-output/
 dist/
 .DS_Store
+.sam2-env/
+*.pt
+*.download

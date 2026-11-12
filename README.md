@@ -1,21 +1,33 @@
-# 钓竿钓玩具
+# 钓竿钓玩具 · v0.2.0
 
-用于 Codex 的鱼竿钓走 GIF 制作技能。
+给使用 Codex 的同事：安装一次，之后只上传视频，Codex自动审片、选段、轮换鱼竿并制作视频。
 
-内置四张完整透明鱼竿，按成功交付的视频轮换：**关注加号 → 点赞红心 → 收藏五角星 → 转发箭头**。同事安装一次后，只需把视频发给Codex，由它审片选段、抠主体、补背景、编排并验收，交付50fps GIF和60fps MP4。修改同片不换款，失败重试不跳号，各同事独立记录。
+**关注加号 → 点赞红心 → 收藏五角星 → 向右转发箭头。** 同片修改保留原款；各同事独立轮换，失败和预览不跳号。
 
-![四款鱼竿](skills/fishing-gif/assets/rods/preview.png)
+[下载最新版技能包](https://github.com/Loon-Q/diaogan-diao-wanju/archive/refs/heads/main.zip)
 
-## 给同事安装
+## 安装给同事
 
-解压后把整个文件夹交给同事的Codex，说：
+把仓库链接或解压后的文件夹交给同事的 Codex，说：
 
-> 请安装这个文件夹里的 fishing-gif 技能，运行 install.py，在安装后的技能目录创建Python虚拟环境，安装 requirements.txt，并运行doctor验证。完成后用这个技能处理我上传的视频。
+> 请安装这个仓库里的 fishing-gif 技能。运行 install.py，安装 requirements.txt 并运行 doctor。以后我只上传视频，你自动选择有机器人出镜的片段，用四款鱼竿轮换制作钓走视频，默认只给我 MP4。
 
-入口 `python install.py` 默认复制到 `$CODEX_HOME/skills/fishing-gif` 或 `~/.codex/skills/fishing-gif`，同名旧技能先备份。macOS/Windows/Linux用同一Python脚本，无需Bash。安装一次即可；当前聊天未发现新技能时，可在新聊天中使用 `$fishing-gif`。
+`python install.py` 默认安装到 `$CODEX_HOME/skills/fishing-gif` 或 `~/.codex/skills/fishing-gif`。同名旧技能先备份，升级保留已有依赖环境。当前聊天未发现技能时，新聊天使用 `$fishing-gif`。支持 Python 3.10+，macOS、Windows、Linux。
 
-依赖Python 3.10+、requirements.txt，以及Codex内可用的图像生成能力（补背景）。FFmpeg来自系统或依赖包。不依赖作者电脑路径、其他技能或同事填写的API Key。
+核心依赖在 `skills/fishing-gif/requirements.txt`。FFmpeg来自系统或依赖包，不依赖作者电脑路径、其他技能或 API Key。补背景使用 Codex 内置图像生成能力。复杂轮廓可由 Codex 按技能说明安装可选的官方 SAM2；首次需要网络、Git、PyTorch及模型下载，不是上传视频后调用一个外部付费接口。
 
-`skills/fishing-gif/` 是实际技能，`tests/` 验证轮换和渲染。主体提起阶段用拾取帧原像素做连续位移摆动；选段、挂点、遮罩和背景仍由Codex按本期素材判断，不承诺严重遮挡或剧烈运镜一次完成。
+## 本版制作方式
 
-发布包不含个人输入视频、状态或虚拟环境。资产生成记录在 `skills/fishing-gif/assets/rods/generation-prompts.json`。公开分发前由仓库所有者选择开源许可证。
+- 前约5～6秒保留含机器人的原片动作、真实接地及阴影；只在离地时使用拾取帧抠像。
+- 一只手从画外送竿，竿尖对准挂点上方并向下落线；吊坠独立摆动，绞盘静止。
+- 小玩具约1秒快速、连续、完整钓出画面；真实体量大的主体用沿地面拖走分支。
+- 鞋、人物等留在原位；布等随身道具随主体一起走。检查轮胎、蟹腿、钳子、线和吊坠全部出画。
+- 默认只输出 **60fps MP4**；仅明确要求时附加50fps GIF。原片保持自身25/30fps等有效画面，新增动作逐帧计算，不用补帧重影伪造流畅。
+
+主体、挂点、遮挡及背景由 Codex 按本期素材判断。平面抠像不能生成背面或真实三维翻转；镜头剧烈移动、遮挡严重时应换片段或补充素材。四款完整资产仍保留，渲染器使用同一只手和竿及四款注册挂饰层，不需要同事处理资产。
+
+## 验证与更新
+
+`tests/test_workflow.py` 验证原生缓存、拾取衔接、四款出入画、拖走接地、GIF按需生成、轮换幂等与安装。详细配置由 Codex 在技能参考中读取，同事不需要填坐标或参数。
+
+旧版项目使用原渲染器或重新 prepare；旧视频不覆盖。发布包不含个人输入视频、虚拟环境、模型权重、轮换数据库。资产记录在 `assets/rods/generation-prompts.json` 和 `assets/rig/generation-prompts.json`。仓库未替所有者另行选择开源许可证。
