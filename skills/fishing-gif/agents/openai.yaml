@@ -1,0 +1,6 @@
+interface:
+  display_name: "鱼竿钓走 GIF"
+  short_description: "上传视频，自动选段并用四款鱼竿轮换钓走主体，交付流畅动图和视频"
+  default_prompt: "使用 $fishing-gif 将我上传的视频制作成鱼竿钓走主体的 GIF，自动选段并轮换挂饰。"
+policy:
+  allow_implicit_invocation: true
