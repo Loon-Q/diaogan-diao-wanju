@@ -1,0 +1,95 @@
+{
+  "version": "0.1.0",
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "407e73fc669b6cf0078f134d5fa1600df7a7a8ce94cc34162e9dad20f9de9a2a",
+      "bytes": 77
+    },
+    {
+      "path": "README.md",
+      "sha256": "9057a1b831224ae492473f7ac6bb3886029569bd7bda36031b8f9b3c98be9c0c",
+      "bytes": 1754
+    },
+    {
+      "path": "VALIDATION.md",
+      "sha256": "017dce6ba4dd66cd997c1d20b1b440be8155c9b1ce72fbe691ce96cdc4c1493a",
+      "bytes": 1903
+    },
+    {
+      "path": "install.py",
+      "sha256": "8645ffebdde6add3917d9423e5fee655a044f71cfe80bc6de301244a44479a96",
+      "bytes": 1427
+    },
+    {
+      "path": "skills/fishing-gif/SKILL.md",
+      "sha256": "179efcae42cb97601d5ea52fd4210b1f0709c09bb54353b8f4a1a2d1c87814ab",
+      "bytes": 4302
+    },
+    {
+      "path": "skills/fishing-gif/agents/openai.yaml",
+      "sha256": "3d45dd4e5b15cae9cd9a5ba720c947d747d2a75fb195a52b9f38b0de2092082c",
+      "bytes": 334
+    },
+    {
+      "path": "skills/fishing-gif/assets/rods/01-follow-plus.png",
+      "sha256": "9c1c3c1788233e5ea21861c3e33836c0ece4d21c738917e2a9b72da34dc80b94",
+      "bytes": 439945
+    },
+    {
+      "path": "skills/fishing-gif/assets/rods/02-like-heart.png",
+      "sha256": "edda81543b96935e3e6e547a01e8efee96c88a3b8191410460fa7db19170b327",
+      "bytes": 457932
+    },
+    {
+      "path": "skills/fishing-gif/assets/rods/03-save-star.png",
+      "sha256": "af24c163c4144a550dc70f6abc729c3f35d21752bc4a8cf108aa58106adc0862",
+      "bytes": 434836
+    },
+    {
+      "path": "skills/fishing-gif/assets/rods/04-share-arrow.png",
+      "sha256": "1ebd63b83672ce597a8719d2a29ce80eb435abe13e4f850207c7eff7b4884c68",
+      "bytes": 445831
+    },
+    {
+      "path": "skills/fishing-gif/assets/rods/generation-prompts.json",
+      "sha256": "4ee7528b66bb0059207bb5304239cd611907ca87e2699fe44ee91cef0d278279",
+      "bytes": 5496
+    },
+    {
+      "path": "skills/fishing-gif/assets/rods/preview.png",
+      "sha256": "6940a2995c9660a46717e32b2243445e76f6ddf0680a34103f94140dafee9536",
+      "bytes": 575252
+    },
+    {
+      "path": "skills/fishing-gif/references/project-config.md",
+      "sha256": "c757c2077640251364a76d98d6b8fc435ca0f984ae9362880229179faa7be808",
+      "bytes": 2493
+    },
+    {
+      "path": "skills/fishing-gif/references/workflow.md",
+      "sha256": "e751c12f6dabb72c1fa1e858dc60359c86c186c5e1438cd1325603709a131c2f",
+      "bytes": 2371
+    },
+    {
+      "path": "skills/fishing-gif/requirements.txt",
+      "sha256": "b4c68165273c49bffbc5da4912665fcf143ae067748b15a72f5d3060c8613bc3",
+      "bytes": 84
+    },
+    {
+      "path": "skills/fishing-gif/scripts/fishing_gif.py",
+      "sha256": "096d266a4b7a566dc7bb1514ab05686298a26da9ea6bccc115e575030dd1c168",
+      "bytes": 29625
+    },
+    {
+      "path": "skills/fishing-gif/scripts/rotation.py",
+      "sha256": "29a4983a568db09a5b6e35cdcfda614dcea3813bd6b556e6abd06c64c92ce6bc",
+      "bytes": 3676
+    },
+    {
+      "path": "tests/test_workflow.py",
+      "sha256": "1163bd6133ce32bee6e3ae89c518b86efb470e059e4aa1c8cbb515254a9ab136",
+      "bytes": 7347
+    }
+  ]
+}
