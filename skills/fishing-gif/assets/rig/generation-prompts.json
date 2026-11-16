@@ -1,0 +1,47 @@
+{
+  "version": "0.2.0",
+  "tool": "built-in imagegen",
+  "canvas": [
+    1254,
+    1254
+  ],
+  "base": {
+    "file": "rod-base.png",
+    "prompt_summary": "Preserve registered original hand/forearm/rod/reel housing; remove pendant and dangling links and original crank so rig can flex and show a static crank.",
+    "source": "assets/rods/01-follow-plus.png"
+  },
+  "pendants": {
+    "follow": {
+      "file": "follow.png",
+      "anchor": [
+        702,
+        680
+      ],
+      "prompt_summary": "Isolate the existing red plus pendant and gold links on the original registered canvas; remove rod, cuff, reel, hand and forearm."
+    },
+    "like": {
+      "file": "like.png",
+      "anchor": [
+        702,
+        680
+      ],
+      "prompt": "Precise registered transparent animation layer. Edit the attached 1254x1254 full fishing rod asset: keep ONLY the existing glossy red heart pendant and its short gold dangling links. Remove every pixel of rod, guides, large gold cuff encircling the rod, reel, crank, hand and forearm. Preserve the pendant's original design, original red shade, highlights, dimensions, orientation and EXACT coordinates on the original 1254 square canvas. Its top connection stays near (702,680), symbol below around (650,830). Do not recenter, resize, redraw the icon or add anything. For the share arrow preserve its RIGHT pointing direction. Outside this isolated pendant and hanging gold links, all pixels must have true zero alpha. The output will be overlaid onto the original rod; precise registration and clean transparent edges matter."
+    },
+    "save": {
+      "file": "save.png",
+      "anchor": [
+        657,
+        690
+      ],
+      "prompt": "Precise registered transparent animation layer. Edit the attached 1254x1254 full fishing rod asset: keep ONLY the existing glossy red five-point star pendant and its short gold dangling links. Remove every pixel of rod, guides, large gold cuff encircling the rod, reel, crank, hand and forearm. Preserve the pendant's original design, original red shade, highlights, dimensions, orientation and EXACT coordinates on the original 1254 square canvas. Its top connection stays near (702,680), symbol below around (650,830). Do not recenter, resize, redraw the icon or add anything. For the share arrow preserve its RIGHT pointing direction. Outside this isolated pendant and hanging gold links, all pixels must have true zero alpha. The output will be overlaid onto the original rod; precise registration and clean transparent edges matter."
+    },
+    "share": {
+      "file": "share.png",
+      "anchor": [
+        661,
+        708
+      ],
+      "prompt": "Precise registered transparent animation layer. Edit the attached 1254x1254 full fishing rod asset: keep ONLY the existing glossy red curved RIGHT-pointing share arrow pendant and its short gold dangling links. Remove every pixel of rod, guides, large gold cuff encircling the rod, reel, crank, hand and forearm. Preserve the pendant's original design, original red shade, highlights, dimensions, orientation and EXACT coordinates on the original 1254 square canvas. Its top connection stays near (702,680), symbol below around (650,830). Do not recenter, resize, redraw the icon or add anything. For the share arrow preserve its RIGHT pointing direction. Outside this isolated pendant and hanging gold links, all pixels must have true zero alpha. The output will be overlaid onto the original rod; precise registration and clean transparent edges matter."
+    }
+  }
+}

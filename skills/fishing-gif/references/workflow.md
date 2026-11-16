@@ -1,28 +1,31 @@
-# 制作命令
+# 制作步骤
 
-`PY` 是已安装依赖的Python，`CLI` 是本技能 `scripts/fishing_gif.py` 的完整路径。路径必须引用，不把用户文件名拼接为可执行命令。
-
-首次创建 `.venv`：`python -m venv 技能目录/.venv`，用该环境Python运行 `-m pip install -r 技能目录/requirements.txt`。macOS/Linux在 `.venv/bin/python`，Windows在 `.venv/Scripts/python.exe`。
+`PY` 是安装了 requirements.txt 的Python，`CLI` 是本技能 scripts/fishing_gif.py 的绝对路径。用户不用填写参数，由Codex审片并配置。Windows用 `.venv/Scripts/python.exe`，macOS/Linux用 `.venv/bin/python`。
 
 ```sh
 PY CLI doctor
-PY CLI inspect 输入.mp4 --out 审片目录
-PY CLI prepare 输入.mp4 --out 新项目目录 --start 29.8 --duration 3.233333333
-PY CLI matte 项目目录/project.json
-PY CLI preview 项目目录/project.json
-PY CLI render 项目目录/project.json
-PY CLI complete 项目目录/project.json --qa-notes "实际查看了导出和具体动作接缝"
+PY CLI inspect 原片.mp4 --out 审片目录
+PY CLI prepare 原片.mp4 --out 新项目 --start 27 --duration 6 --motion lift
+PY CLI matte 新项目/project.json
+PY CLI track 新项目/project.json
+PY CLI preview 新项目/project.json
+PY CLI render 新项目/project.json
+PY CLI complete 新项目/project.json --qa-notes "实际查看的接缝、动作、背景与完整出画"
 PY CLI rotation
 ```
 
-`inspect` 输出 `timeline.jpg` 和 `source-info.json`，默认最多48张。长视频需要分段查看；不能只看首帧就声称审过全片。`prepare` 最长源片段8秒，保留比例，不超过720宽/1280高，不放大低分辨率输入。补帧出现细节扭曲时换时机或缩短片段。
+首次安装：`python -m venv 技能目录/.venv`，用该环境Python运行 `-m pip install -r 技能目录/requirements.txt`。安装包不含虚拟环境、个人素材或状态。
 
-`prepare --variant auto` 为默认；测试添加 `--state-dir 测试状态目录`。准备不推进轮换。相同内容按SHA256识别，不因改名换款。修改时复用项目；脚本自动另存输出版本。
+`prepare` 的 start/duration 基于原片时钟并对齐原生帧，示例在27秒起、33秒拾取；靠近结尾时会使用最后可解码帧并报告实际拾取时刻。缓存 `media/source-native.mkv` 使用无损FFV1，包含拾取帧，保留原RGB。最多选30秒，通常约6秒；不放大低分辨率视频。没有提前抠像或运动插帧。
 
-查看拾取帧后按 [配置说明](project-config.md) 填写 `project.json`。`matte` 输出原像素主体 `subject.png` 及 `matte-checker.png`。补片用本期拾取帧通过内置图像生成工具制作，只去掉主体和其投影，保持场景；不复用旧视频背景。
+默认 `--variant auto`。制作新项目用新目录；测试传 `--state-dir 隔离目录`。只在 `complete` 成功时推进一次轮换。修订使用同一原视频与状态，或复用配置后渲染新版本；保持用户确认的款式和动作。
 
-`preview` 输出10张关键帧、`contact.jpg` 和 `exit-check.json`。数值出画检查不能替代视觉检查。`render` 输出 `output/v001` 等新版本，含GIF、MP4和报告，不覆盖旧版。GIF每帧20ms且循环；MP4为H.264无声。可额外生成小尺寸预览，但保持50fps，不能用15fps预览替代流畅版本。
+查看拾取帧并填写 anchor、matte 和 cleanup。复杂轮廓按[抠像](matting.md)运行SAM2；已有灰度遮罩也可直接填 mask_file。`track` 在原生图像上逆向跟踪挂点，需先有主体遮罩。跟踪失败时检查入场时段，改选稳定片段或由Codex填写 anchor_track；不要让用户理解跟踪参数，也不要保留滑动的挂点。
 
-完成前查看真实导出，必要时播放；记录实际验收范围。`complete` 验证配置及成片摘要后提交一次轮换，重复完成幂等。未完成的新片不推进游标，旧片延后重试仍保留原款。显式指定款式不推进游标。
+补背景使用Codex内置 imagegen。取本期拾取帧，仅移除主体、所持道具及其投影。鞋/人物可用 protect_mask_file 保留可见原像素，被布遮住的小块鞋尖由补片恢复。没有图像生成能力则保留项目并如实说明。
 
-最终简短说明选段和当前挂饰，嵌入GIF、链接MP4。用户不需要理解参数或每次选鱼竿。不得自动发送第三方或发布GitHub。
+`preview` 的 contact.jpg、关键帧与 exit-check.json 只供内部审查。不能用数值出画替代实际看成片；竿尖可能已离开画面但末梢道具仍在，需要逐项检查。`render` 默认仅输出 H.264 无声60fps MP4、报告到 output/v001 等新目录。仅用户明确要GIF时加 `--gif`，才额外计算独立50fps母版与GIF。
+
+最终只展示MP4；不把GIF/分镜图当默认预览。完整版本保留约5～6秒含机器人的原片动作，再接约1秒钓走与短空镜。已确认试片扩展完整版时保持已确认动作，可按同参数重新渲染或将原片接到试片前；检查连接处原片时钟连续，无重复倒放。
+
+v0.2配置使用 schema 2；v0.1老项目保留原渲染器或重新 prepare，同片仍保留选款。不要改老成片，也不要仅修改说明却继续运行v0.1慢速模板。

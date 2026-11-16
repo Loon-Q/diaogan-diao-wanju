@@ -73,6 +73,90 @@ class RotationTests(unittest.TestCase):
 
 
 class ExportTests(unittest.TestCase):
+    def configure(self,root,motion="lift",variant="auto"):
+        import numpy as np
+        video=make_fixture(root/"input")
+        project=root/"project";state=root/"state"
+        command("prepare",video,"--start",0,"--duration",1,"--out",project,
+                "--state-dir",state,"--width",240,"--motion",motion,"--variant",variant)
+        config=project/"project.json";c=json.loads(config.read_text())
+        c["matte"]["polygons"]=[
+            [[120+34*float(np.cos(a)),170+34*float(np.sin(a))] for a in np.linspace(0,2*np.pi,32,endpoint=False)],
+            [[96,194],[112,194],[112,222],[96,222]],[[128,194],[144,194],[144,222],[128,222]]]
+        c["subject"]["anchor"]=[120,150]
+        c["cleanup"]["plate"]=str(root/"input/clean-plate.png")
+        c["cleanup"]["ellipses"]=[[120,230,44,10]]
+        config.write_text(json.dumps(c));command("matte",config)
+        return video,project,config,c,state
+
+    def test_native_cache_exact_pickup_and_no_early_cutout(self):
+        import cv2,numpy as np
+        import fishing_gif as renderer
+        renderer.deps()
+        with tempfile.TemporaryDirectory() as tmp:
+            video,project,config,c,state=self.configure(Path(tmp))
+            a=cv2.VideoCapture(str(video));b=cv2.VideoCapture(str(project/c["media"]["native"]))
+            for i in range(31):
+                oa,fa=a.read();ob,fb=b.read();self.assertTrue(oa and ob)
+                self.assertTrue(np.array_equal(fa,fb),f"Native frame {i} changed")
+            a.release();b.release()
+            scene=renderer.Scene(project,c)
+            for t in [0,.25,.75,1]:
+                actual=scene.render(t);native,_=scene.native(t)
+                self.assertEqual(scene.stats["base"],"original_video")
+                self.assertLessEqual(int(np.abs(actual[225:250,65:165].astype(int)-native[225:250,65:165].astype(int)).max()),1)
+            scene.render(1+1/60)
+            self.assertEqual(scene.stats["base"],"pickup_composite")
+
+    def test_all_four_rigs_enter_offscreen_connect_and_clear(self):
+        import fishing_gif as renderer
+        renderer.deps()
+        with tempfile.TemporaryDirectory() as tmp:
+            _,project,config,c,_=self.configure(Path(tmp))
+            for variant in rotation.ORDER:
+                c["variant"]=variant;scene=renderer.Scene(project,c)
+                scene.render(0)
+                self.assertTrue(all(v==0 for k,v in scene.stats.items() if k.endswith("visible_pixels")))
+                scene.render(c["timing"]["pickup"]+.2)
+                self.assertAlmostEqual(scene.stats["rope_length"],scene.rope,places=3)
+                self.assertTrue(all(v==0 for v in scene.exit_check().values()))
+
+    def test_drag_keeps_ground_height_and_cleans_tail(self):
+        import fishing_gif as renderer
+        import numpy as np
+        from PIL import Image
+        renderer.deps()
+        with tempfile.TemporaryDirectory() as tmp:
+            _,project,config,c,_=self.configure(Path(tmp),motion="drag")
+            scene=renderer.Scene(project,c)
+            for u in [.1,.4,.8,1]:
+                t=c["timing"]["lift"]+u*(c["timing"]["exit"]-c["timing"]["lift"])
+                matrix,hook,_=scene.pose(t)
+                self.assertAlmostEqual(float(hook[1]),c["subject"]["anchor"][1],places=4)
+                self.assertAlmostEqual(float(matrix[1,0]),0,places=5)
+            self.assertTrue(all(v==0 for v in scene.exit_check().values()))
+            end=scene.render(c["timing"]["end"]-1/60)
+            expected=np.array(Image.open(Path(tmp)/"input/clean-plate.png"))
+            self.assertTrue(np.array_equal(end,scene.clean))
+            self.assertLess(float(np.abs(end[125:240,75:165].astype(float)-expected[125:240,75:165].astype(float)).mean()),1.5)
+
+    def test_optional_gif_and_anchor_tracking(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            _,project,config,c,state=self.configure(Path(tmp),variant="like")
+            native=project/c["media"]["native"];before=hashlib.sha256(native.read_bytes()).hexdigest()
+            command("track",config)
+            tracked=json.loads(config.read_text())["subject"]["anchor_track"]
+            self.assertEqual(len(tracked),31)
+            self.assertLess(abs(tracked[0][2]-152),3)
+            self.assertEqual(hashlib.sha256(native.read_bytes()).hexdigest(),before)
+            command("render",config,"--gif")
+            report=json.loads((project/"output/v001/report.json").read_text())
+            self.assertEqual(report["validation"]["gif"]["frame_delays_ms"],[20])
+            self.assertEqual(report["validation"]["gif"]["frames"],round(c["timing"]["end"]*50))
+            command("complete",config,"--qa-notes","Synthetic explicit variant export")
+            self.assertEqual(rotation.status(state)["next_variant"],"follow")
+
     def test_portable_full_pipeline_and_corruption_guard(self):
         import numpy as np
         with tempfile.TemporaryDirectory(prefix="fishing-smoke-") as tmp:
@@ -105,19 +189,19 @@ class ExportTests(unittest.TestCase):
             self.assertLess(float(np.abs(actual[100:110]-expected[100:110]).max()), 5,
                             "The supplied shadow cleanup region left a visible shadow edge.")
             exit_info = json.loads((project / "preview/exit-check.json").read_text())
-            self.assertEqual(exit_info, {"subject_visible_pixels":0,"rod_visible_pixels":0})
+            self.assertTrue(all(v==0 for v in exit_info.values()))
             command("render", config_file)
             report = json.loads((project / "output/v001/report.json").read_text())
-            self.assertEqual(report["validation"]["gif"]["frame_delays_ms"], [20])
-            self.assertEqual(report["validation"]["gif"]["frames"], 260)
-            self.assertEqual(report["validation"]["mp4"]["frames"], 312)
+            self.assertNotIn("gif",report["files"])
+            self.assertFalse(list((project/"output/v001").glob("*.gif")))
+            self.assertEqual(report["validation"]["mp4"]["frames"],round(c["timing"]["end"]*60))
             self.assertEqual(rotation.status(state)["next_variant"], "follow")
             command("complete", config_file, "--qa-notes", "Automated export contract test; visual review separate")
             self.assertEqual(rotation.status(state)["next_variant"], "like")
             command("complete", config_file, "--qa-notes", "Idempotence check")
             self.assertEqual(rotation.status(state)["next_variant"], "like")
-            gif = project / report["files"]["gif"]["path"]
-            with gif.open("ab") as f:
+            mp4 = project / report["files"]["mp4"]["path"]
+            with mp4.open("ab") as f:
                 f.write(b"changed")
             self.assertNotEqual(command("complete", config_file, "--qa-notes", "should reject", success=False).returncode, 0)
 
@@ -129,6 +213,10 @@ class ExportTests(unittest.TestCase):
             self.assertEqual(len(list((destination / "assets/rods").glob("0*.png"))),4)
             result = subprocess.run([sys.executable,str(destination / "scripts/fishing_gif.py"),"doctor"],capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr)
+            marker=destination/".venv/keep-dependencies.txt"
+            marker.parent.mkdir();marker.write_text("keep")
+            subprocess.run([sys.executable,str(REPO/"install.py"),"--dest",str(destination)],check=True,capture_output=True,env={**__import__("os").environ,"CODEX_HOME":str(Path(tmp)/"codex")})
+            self.assertEqual(marker.read_text(),"keep")
 
 
 if __name__ == "__main__":
