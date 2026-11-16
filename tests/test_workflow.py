@@ -164,6 +164,43 @@ class ExportTests(unittest.TestCase):
             c['subject']['motion']='drag';c['subject']['rise_px']=18
             with self.assertRaisesRegex(ValueError,'ground contact'):renderer.Scene(project,c)
 
+    def test_filled_shadow_follows_and_fades_outside_in(self):
+        import fishing_gif as renderer
+        import numpy as np
+        import cv2
+        renderer.deps()
+        with tempfile.TemporaryDirectory() as tmp:
+            _,project,config,c,_=self.configure(Path(tmp),motion="low_lift")
+            c['subject']['rise_px']=18
+            c['cleanup']['ground_shadow']={'ellipses':[[120,230,35,14,0]],'reference':[120,190],'opacity':.3}
+            scene=renderer.Scene(project,c)
+            # A fully formed footprint fills the old gap between the feet.
+            d=scene.shadow_distance
+            self.assertGreater(d[230,120],0)
+            actual_pose,actual_motion=scene.pose,scene.weighted_kinematics
+            identity=np.array([[1,0,0],[0,1,0]],np.float32)
+            scene.pose=lambda t:(identity,scene.anchor,1)
+            scene.weighted_kinematics=lambda t:(identity,0,0,1)
+            low=scene.ground_shadow_field(c['timing']['pickup']+.3)
+            scene.weighted_kinematics=lambda t:(identity,18,0,1)
+            high=scene.ground_shadow_field(c['timing']['pickup']+.3)
+            scene.pose,scene.weighted_kinematics=actual_pose,actual_motion
+            self.assertGreater(high[230,120],high[230,151])
+            self.assertLess(high[230,151]/low[230,151],high[230,120]/low[230,120])
+            fields=[scene.ground_shadow_field(c['timing']['pickup']+dt) for dt in [.17,.5,.7]]
+            centers=[]
+            yy,xx=np.indices(fields[0].shape)
+            for f in fields:
+                count,_,_,_=cv2.connectedComponentsWithStats((f>.02).astype(np.uint8))
+                self.assertEqual(count-1,1)
+                centers.append(float((xx*f).sum()/f.sum()))
+            self.assertGreater(centers[-1],centers[0]+20)
+            self.assertTrue(all(v==0 for v in scene.exit_check().values()))
+            c['subject'].update(motion='drag',rise_px=0)
+            drag=renderer.Scene(project,c)
+            self.assertGreater(float(drag.ground_shadow_field(c['timing']['pickup']+.7).max()),.25)
+            self.assertTrue(all(v==0 for v in drag.exit_check().values()))
+
     def test_optional_gif_and_anchor_tracking(self):
         import hashlib
         with tempfile.TemporaryDirectory() as tmp:

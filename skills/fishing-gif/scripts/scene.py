@@ -111,7 +111,57 @@ class Scene:
             self.root/c['matte']['output'],self.root/c['cleanup']['plate'],base,charm]
         self.make_background()
         self.stats={}
-        if self.weighted:self.soft_shadow=cv2.GaussianBlur(np.minimum(self.shadow,0),(0,0),max(.5,24*self.k))
+        self.make_ground_shadow()
+
+    def make_ground_shadow(self):
+        cfg=self.c['cleanup'].get('ground_shadow',{})
+        x0,y0,x1,y1=self.bbox;bw=x1-x0;bh=y1-y0
+        self.shadow_opacity=float(cfg.get('opacity',.28))
+        self.shadow_transition=float(cfg.get('transition_seconds',.16))
+        if not 0<=self.shadow_opacity<=.6 or self.shadow_transition<=0:
+            raise ValueError('ground_shadow requires opacity 0..0.6 and a positive transition_seconds.')
+        self.shadow_reference=np.array(cfg.get('reference',[(x0+x1)/2,y0+.65*bh]),np.float32)
+        self.shadow_slope=float(self.c['subject'].get('ground_slope',0))
+        self.shadow_hull=cv2.convexHull(cv2.findNonZero((self.alpha>80).astype(np.uint8))).reshape(-1,2).astype(np.float32)
+        self.shadow_ground=float(np.max(self.shadow_hull[:,1]-self.shadow_slope*self.shadow_hull[:,0]))
+        yy,xx=np.indices((self.h,self.w),dtype=np.float32)
+        ellipses=cfg.get('ellipses') or [[(x0+x1)/2-.08*bw,y1,.4*bw,max(6*self.k,.075*bh),-10]]
+        distance=np.full((self.h,self.w),-1e6,np.float32)
+        for ellipse in ellipses:
+            cx,cy,rx,ry=map(float,ellipse[:4]);angle=math.radians(ellipse[4] if len(ellipse)>4 else 0)
+            if rx<=0 or ry<=0:raise ValueError('ground_shadow ellipse radii must be positive.')
+            x=xx-cx;y=yy-cy
+            px=math.cos(angle)*x+math.sin(angle)*y;py=-math.sin(angle)*x+math.cos(angle)*y
+            radius=np.sqrt((px/rx)**2+(py/ry)**2)
+            distance=np.maximum(distance,(1-radius)*min(rx,ry))
+        self.shadow_distance=distance
+        darkness=np.maximum(0,-self.shadow.mean(2))
+        self.shadow_original=np.clip(darkness/np.maximum(30,self.clean.mean(2)),0,.45)
+        self.shadow_floor=None
+        if cfg.get('mask_file'):
+            path=self.root/cfg['mask_file'];mask=np.array(Image.open(path).convert('L')).astype(np.float32)/255
+            if mask.shape!=(self.h,self.w):raise ValueError('Ground shadow floor mask dimensions mismatch.')
+            self.shadow_floor=mask;self.input_paths.append(path)
+
+    def ground_shadow_field(self,t):
+        m,hook,u=self.pose(t)
+        if self.weighted:
+            _,height,dx,_=self.weighted_kinematics(t)
+        else:
+            dx=float(hook[0]-self.anchor[0])
+            hull=self.shadow_hull@m[:,:2].T+m[:,2]
+            height=max(0,self.shadow_ground-float(np.max(hull[:,1]-self.shadow_slope*hull[:,0])))
+        # Inset consumes the outside first; a filled core has no foot-shaped holes.
+        inset=.20*height;softness=max(.5,26*self.k+.20*height)
+        q=np.clip((self.shadow_distance-inset+softness)/(2*softness),0,1)
+        field=q*q*(3-2*q)*self.shadow_opacity*math.exp(-height/max(1,240*self.k))
+        center=m[:,:2]@self.shadow_reference+m[:,2]
+        shift_x=.7*(center[0]-self.shadow_reference[0])+.3*dx
+        field=cv2.warpAffine(field,matrix([0,0],[shift_x,self.shadow_slope*dx]),(self.w,self.h),flags=cv2.INTER_LINEAR)
+        blend=smooth(self.t['pickup'],self.t['pickup']+self.shadow_transition,t)
+        field=self.shadow_original*(1-blend)+field*blend
+        if self.shadow_floor is not None:field*=self.shadow_floor
+        return field
 
     def make_background(self):
         cfg=self.c['cleanup'];plate=np.array(Image.open(self.root/cfg['plate']).convert('RGB').resize((self.w,self.h),Image.Resampling.LANCZOS))
@@ -236,20 +286,13 @@ class Scene:
         return premul(cv2.resize(layer,(self.w,self.h),interpolation=cv2.INTER_AREA)),end
 
     def render(self,t):
-        bm,hook,u=self.pose(t);subject_count=0
+        bm,hook,u=self.pose(t);subject_count=0;shadow_count=0
         if t<=self.t['pickup']+1e-9:
             native,hook=self.native(t);bg=native.copy();base='original_video'
         else:
-            if self.weighted:
-                _,clearance,dx,_=self.weighted_kinematics(t)
-                fade=math.exp(-clearance/max(1,150*self.k))
-                residual=cv2.warpAffine(self.soft_shadow,matrix([0,0],[dx,self.ground_slope*dx]),(self.w,self.h),flags=cv2.INTER_LINEAR)*fade
-            elif self.mode=='lift':
-                height=max(0,float(self.anchor[1]-hook[1]));fade=math.exp(-height/max(1,.051*self.h))
-                residual=self.shadow*fade
-            else:
-                residual=cv2.warpAffine(self.shadow,matrix(self.anchor,hook),(self.w,self.h),flags=cv2.INTER_LINEAR)
-            bg=np.rint(np.clip(self.clean+residual,0,255)).astype(np.uint8)
+            field=self.ground_shadow_field(t)
+            shadow_count=int((field>.004).sum())
+            bg=np.rint(np.clip(self.clean*(1-field[...,None]),0,255)).astype(np.uint8)
             subject=np.zeros((self.h,self.w,4),np.float32)
             for dt,weight in [(-1/240,.25),(0,.5),(1/240,.25)]:
                 m,_,_=self.pose(max(self.t['pickup'],t+dt))
@@ -267,7 +310,7 @@ class Scene:
         crank=premul(cv2.resize(crank,(self.w,self.h),interpolation=cv2.INTER_AREA))
         bg=over(bg,crank);bg=over(bg,charm)
         self.stats={'base':base,'hook':hook.tolist(),'tip':tip.tolist(),'rope_length':float(np.linalg.norm(tip-end)),
-            'subject_visible_pixels':subject_count,'rod_visible_pixels':int((rod[...,3]>.01).sum()),
+            'shadow_visible_pixels':shadow_count,'subject_visible_pixels':subject_count,'rod_visible_pixels':int((rod[...,3]>.01).sum()),
             'pendant_visible_pixels':int((charm[...,3]>.01).sum()),'line_visible_pixels':int((line[...,3]>.01).sum()),
             'crank_visible_pixels':int((crank[...,3]>.01).sum())}
         return bg

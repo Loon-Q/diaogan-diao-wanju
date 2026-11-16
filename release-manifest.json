@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "files": [
     {
       "path": ".gitignore",
@@ -8,13 +8,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "f7bf1a686d1cc0f2719b59ee09ce05adb8c0fa64a2b466a03ea5520e32aaadc0",
-      "bytes": 3388
+      "sha256": "9c59c2a320e117845a9040081fa2b4feaa6fcbe3dc13e892e9bbc694da5f1f37",
+      "bytes": 3637
     },
     {
       "path": "VALIDATION.md",
-      "sha256": "f2e0ddf335e6df0f676f7a4fd0a5e499be6dec1b8171bd21a7cf920b4288ef90",
-      "bytes": 3940
+      "sha256": "4f7b72ed00c5f161b951ff4d31aa10c75454846534d64c1ec988da947b32248f",
+      "bytes": 5358
     },
     {
       "path": "install.py",
@@ -23,8 +23,8 @@
     },
     {
       "path": "skills/fishing-gif/SKILL.md",
-      "sha256": "d91afa3ec03c468517b1c69c8f6b44c9ea8a368314c639b042a71ceccf1cdee1",
-      "bytes": 5931
+      "sha256": "b265b6f41cb73d20675f8aedb209cca26ea30a59c99810a2679bb15675f0499e",
+      "bytes": 6285
     },
     {
       "path": "skills/fishing-gif/agents/openai.yaml",
@@ -98,13 +98,13 @@
     },
     {
       "path": "skills/fishing-gif/references/project-config.md",
-      "sha256": "987a15142d59ea1080246581b3b10a70b971ccbf9ecb854d0c4de74ef7199364",
-      "bytes": 6653
+      "sha256": "eadd7b5e8324bc749598281abb52d19ff4eb864abdedb341c5c66bb459dc7f91",
+      "bytes": 8478
     },
     {
       "path": "skills/fishing-gif/references/workflow.md",
-      "sha256": "b78aeab31e32b2ccdf435ae6e78a2c7410d7e913fa81e605769d64b468bff53b",
-      "bytes": 3189
+      "sha256": "2019d473a7fa03495f2b728b8fca5bccc55bfea247a202cfe1b01f093a250f56",
+      "bytes": 3393
     },
     {
       "path": "skills/fishing-gif/requirements.txt",
@@ -128,13 +128,13 @@
     },
     {
       "path": "skills/fishing-gif/scripts/scene.py",
-      "sha256": "2793e766d15598ea828bf06093814353dff2ea5597a03e6f1eafbbe208cb8a4f",
-      "bytes": 17204
+      "sha256": "781235bc679818c2e2a8fbf53cdd9a589178bb2bf3852bc63d89fee934243544",
+      "bytes": 19840
     },
     {
       "path": "tests/test_workflow.py",
-      "sha256": "00f5e978923f30c72b703b61b47557a575f8603c23b8ac206b0413563b5d90e5",
-      "bytes": 13872
+      "sha256": "26b89f7761118aa282a0de4cca0304679653177ddc40c7eb441b0038f98a7bf2",
+      "bytes": 15992
     }
   ]
 }
