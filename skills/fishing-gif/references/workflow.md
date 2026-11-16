@@ -5,7 +5,7 @@
 ```sh
 PY CLI doctor
 PY CLI inspect 原片.mp4 --out 审片目录
-PY CLI prepare 原片.mp4 --out 新项目 --start 27 --duration 6 --motion lift
+PY CLI prepare 原片.mp4 --out 新项目 --start 27 --duration 6 --motion low_lift
 PY CLI matte 新项目/project.json
 PY CLI track 新项目/project.json
 PY CLI preview 新项目/project.json
@@ -20,7 +20,7 @@ PY CLI rotation
 
 默认 `--variant auto`。制作新项目用新目录；测试传 `--state-dir 隔离目录`。只在 `complete` 成功时推进一次轮换。修订使用同一原视频与状态，或复用配置后渲染新版本；保持用户确认的款式和动作。
 
-查看拾取帧并填写 anchor、matte 和 cleanup。复杂轮廓按[抠像](matting.md)运行SAM2；已有灰度遮罩也可直接填 mask_file。`track` 在原生图像上逆向跟踪挂点，需先有主体遮罩。跟踪失败时检查入场时段，改选稳定片段或由Codex填写 anchor_track；不要让用户理解跟踪参数，也不要保留滑动的挂点。
+查看拾取帧并填写 anchor、matte 和 cleanup；low_lift/drag还须填写本片承重脚上的pivot。小玩具lift、偏大机器人先倾斜低吊low_lift、更大型重机器人倾斜接地拖走drag，按体量判断，不能直立平移。复杂轮廓按[抠像](matting.md)运行SAM2；已有灰度遮罩也可直接填 mask_file。`track` 在原生图像上逆向跟踪挂点，需先有主体遮罩。跟踪失败时检查入场时段，改选稳定片段或由Codex填写 anchor_track；不要让用户理解跟踪参数，也不要保留滑动的挂点。
 
 补背景使用Codex内置 imagegen。取本期拾取帧，仅移除主体、所持道具及其投影。鞋/人物可用 protect_mask_file 保留可见原像素，被布遮住的小块鞋尖由补片恢复。没有图像生成能力则保留项目并如实说明。
 

@@ -45,7 +45,8 @@ class Scene:
         if not (0<=x<self.w and 0<=y<self.h and self.alpha[y,x]>80):
             raise ValueError('Contact point is not on the subject matte.')
         self.mode=c['subject'].get('motion','lift')
-        if self.mode not in ('lift','drag'):raise ValueError('subject.motion must be lift or drag.')
+        if self.mode not in ('lift','low_lift','drag'):raise ValueError('subject.motion must be lift, low_lift or drag.')
+        self.weighted=self.mode in ('low_lift','drag')
         t=self.t
         if not (0<=t['enter_start']<t['enter_end']<=t['line_start']<t['contact']<=t['pickup']==t['lift']<t['exit']<t['end']):
             raise ValueError('Use ordered entry/drop/contact/pickup/exit times; pickup equals lift.')
@@ -69,6 +70,22 @@ class Scene:
         bbox=Image.fromarray(self.alpha).getbbox()
         if bbox is None:raise ValueError('Empty subject.')
         self.bbox=bbox
+        if self.weighted:
+            cfg=c['subject']
+            if cfg.get('pivot') is None:raise ValueError('Set subject.pivot on the inspected supporting foot/toe for low_lift or drag.')
+            self.pivot=np.array(cfg['pivot'],np.float32)
+            px,py=np.round(self.pivot).astype(int)
+            if not (0<=px<self.w and 0<=py<self.h and self.alpha[py,px]>80):
+                raise ValueError('Supporting pivot must lie on the subject matte.')
+            points=cv2.findNonZero((self.alpha>80).astype(np.uint8))
+            self.ground_hull=cv2.convexHull(points).reshape(-1,2).astype(np.float32)
+            self.ground_slope=float(cfg.get('ground_slope',0))
+            self.ground_level=float(np.max(self.ground_hull[:,1]-self.ground_slope*self.ground_hull[:,0]))
+            self.rise=float(cfg.get('rise_px',82*self.k if self.mode=='low_lift' else 0))
+            self.tilt=float(cfg.get('tilt_degrees',23 if self.mode=='low_lift' else 16))
+            if self.rise<0 or (self.mode=='drag' and self.rise!=0):
+                raise ValueError('Use low_lift for clearance; drag keeps ground contact with rise_px=0.')
+            if not 0<self.tilt<=35:raise ValueError('Use a restrained positive tilt_degrees up to 35.')
         left=self.anchor[0]-bbox[0]
         end_x=self.w+left+max(70*self.k,.12*self.w)
         self.end=np.array(c['subject'].get('end') or [end_x,self.anchor[1]-.64*self.h],np.float32)
@@ -79,7 +96,7 @@ class Scene:
             self.path=np.array(self.path,np.float32)
             if self.path.shape!=(4,2) or np.linalg.norm(self.path[0]-self.anchor)>.01:
                 raise ValueError('path needs four Bezier points starting at anchor.')
-            if self.mode=='drag':raise ValueError('Use end/ground_slope for ground dragging, not an airborne Bezier path.')
+            if self.weighted:raise ValueError('Weighted motion uses pivot/end/ground_slope, not an airborne Bezier path.')
         rod=c['rod']
         self.rope=float(rod.get('line_length') or max(50*self.k,self.anchor[1]-.06*self.h))
         if self.rope<=0:raise ValueError('line_length must be positive.')
@@ -94,6 +111,7 @@ class Scene:
             self.root/c['matte']['output'],self.root/c['cleanup']['plate'],base,charm]
         self.make_background()
         self.stats={}
+        if self.weighted:self.soft_shadow=cv2.GaussianBlur(np.minimum(self.shadow,0),(0,0),max(.5,24*self.k))
 
     def make_background(self):
         cfg=self.c['cleanup'];plate=np.array(Image.open(self.root/cfg['plate']).convert('RGB').resize((self.w,self.h),Image.Resampling.LANCZOS))
@@ -147,11 +165,25 @@ class Scene:
             anchor=np.array([np.interp(t,self.track[:,0],self.track[:,i]) for i in (1,2)],np.float32)
         return self.frames[index],anchor
 
+    def weighted_kinematics(self,t):
+        u=float(np.clip((t-self.t['pickup'])/(self.t['exit']-self.t['pickup']),0,1))
+        angle=self.tilt*(.78*smooth(0,.215,u)+.22*smooth(.215,.385,u)-.13*smooth(.385,.885,u))
+        q=float(np.clip((u-.123)/.877,0,1))
+        dx=float(self.end[0]-self.anchor[0])*q**1.65
+        clearance=self.rise*smooth(.154,.431,u)
+        m=matrix(self.pivot,self.pivot+np.array([dx,self.ground_slope*dx-clearance],np.float32),angle)
+        # Keep the lowest rotated contact on the floor plane; no foot penetrates it.
+        hull=self.ground_hull@m[:,:2].T+m[:,2]
+        depth=float(np.max(hull[:,1]-self.ground_slope*hull[:,0]))
+        m[1,2]+=self.ground_level-clearance-depth
+        return m,clearance,dx,u
+
     def pose(self,t):
+        if self.weighted:
+            m,_,_,u=self.weighted_kinematics(t)
+            return m,m[:,:2]@self.anchor+m[:,2],u
         u=float(np.clip((t-self.t['lift'])/(self.t['exit']-self.t['lift']),0,1))
-        if self.mode=='drag':
-            q=u**1.35;hook=self.anchor+(self.end-self.anchor)*q
-        elif self.path is not None:
+        if self.path is not None:
             p0,p1,p2,p3=self.path;hook=(1-u)**3*p0+3*(1-u)**2*u*p1+3*(1-u)*u*u*p2+u**3*p3
         else:
             hook=self.anchor+(self.end-self.anchor)*np.array([u*u,u**1.3],np.float32)
@@ -165,7 +197,7 @@ class Scene:
         load_weight=smooth(load_start,tt['pickup']+.02,t)
         tau=max(0,t-tt['pickup'])
         angle=30+(cfg.get('angle',19)-30)*enter+3*load_weight*math.exp(-tau/.7)
-        lean=math.radians((65*smooth(tt['pickup'],tt['exit'],t)) if self.mode=='drag' else 10*math.sin(math.pi*u))
+        lean=math.radians((28*smooth(0,.246,u)) if self.weighted else 10*math.sin(math.pi*u))
         target=hook+np.array([self.rope*math.sin(lean),-self.rope*math.cos(lean)],np.float32)
         start=np.array([self.w+max(.32*self.w,90*self.k),max(.15*self.h,target[1]+.08*self.h)],np.float32)
         tip=start*(1-enter)+target*enter
@@ -208,7 +240,11 @@ class Scene:
         if t<=self.t['pickup']+1e-9:
             native,hook=self.native(t);bg=native.copy();base='original_video'
         else:
-            if self.mode=='lift':
+            if self.weighted:
+                _,clearance,dx,_=self.weighted_kinematics(t)
+                fade=math.exp(-clearance/max(1,150*self.k))
+                residual=cv2.warpAffine(self.soft_shadow,matrix([0,0],[dx,self.ground_slope*dx]),(self.w,self.h),flags=cv2.INTER_LINEAR)*fade
+            elif self.mode=='lift':
                 height=max(0,float(self.anchor[1]-hook[1]));fade=math.exp(-height/max(1,.051*self.h))
                 residual=self.shadow*fade
             else:

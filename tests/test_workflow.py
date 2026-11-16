@@ -84,6 +84,7 @@ class ExportTests(unittest.TestCase):
             [[120+34*float(np.cos(a)),170+34*float(np.sin(a))] for a in np.linspace(0,2*np.pi,32,endpoint=False)],
             [[96,194],[112,194],[112,222],[96,222]],[[128,194],[144,194],[144,222],[128,222]]]
         c["subject"]["anchor"]=[120,150]
+        if motion in ("drag","low_lift"):c["subject"]["pivot"]=[140,220]
         c["cleanup"]["plate"]=str(root/"input/clean-plate.png")
         c["cleanup"]["ellipses"]=[[120,230,44,10]]
         config.write_text(json.dumps(c));command("matte",config)
@@ -132,13 +133,36 @@ class ExportTests(unittest.TestCase):
             for u in [.1,.4,.8,1]:
                 t=c["timing"]["lift"]+u*(c["timing"]["exit"]-c["timing"]["lift"])
                 matrix,hook,_=scene.pose(t)
-                self.assertAlmostEqual(float(hook[1]),c["subject"]["anchor"][1],places=4)
-                self.assertAlmostEqual(float(matrix[1,0]),0,places=5)
+                hull=scene.ground_hull@matrix[:,:2].T+matrix[:,2]
+                self.assertAlmostEqual(float(np.max(hull[:,1])),scene.ground_level,places=3)
+                self.assertGreater(float(matrix[1,0]),.01)
+                np.testing.assert_allclose(hook,matrix[:,:2]@scene.anchor+matrix[:,2],atol=1e-4)
             self.assertTrue(all(v==0 for v in scene.exit_check().values()))
             end=scene.render(c["timing"]["end"]-1/60)
             expected=np.array(Image.open(Path(tmp)/"input/clean-plate.png"))
             self.assertTrue(np.array_equal(end,scene.clean))
             self.assertLess(float(np.abs(end[125:240,75:165].astype(float)-expected[125:240,75:165].astype(float)).mean()),1.5)
+
+    def test_low_lift_tips_before_lifting_and_stays_low(self):
+        import fishing_gif as renderer
+        import numpy as np
+        renderer.deps()
+        with tempfile.TemporaryDirectory() as tmp:
+            _,project,config,c,_=self.configure(Path(tmp),motion="low_lift")
+            c['subject']['rise_px']=18
+            scene=renderer.Scene(project,c)
+            first=scene.weighted_kinematics(c['timing']['pickup']+.08)
+            self.assertEqual(first[1],0)
+            self.assertEqual(first[2],0)
+            self.assertGreater(first[0][1,0],.01)
+            for u in [.1,.3,.6,1]:
+                m,height,dx,_=scene.weighted_kinematics(c['timing']['pickup']+u*1.3)
+                hull=scene.ground_hull@m[:,:2].T+m[:,2]
+                self.assertAlmostEqual(float(np.max(hull[:,1])),scene.ground_level-height,places=3)
+                self.assertLessEqual(height,18)
+            self.assertTrue(all(v==0 for v in scene.exit_check().values()))
+            c['subject']['motion']='drag';c['subject']['rise_px']=18
+            with self.assertRaisesRegex(ValueError,'ground contact'):renderer.Scene(project,c)
 
     def test_optional_gif_and_anchor_tracking(self):
         import hashlib

@@ -199,7 +199,7 @@ def prepare(args):
             "feather": 10, "ellipses": []},
         "subject": {"anchor": None, "anchor_track": [], "motion": args.motion,
             "end": None, "swing_degrees": 3 if args.motion == "lift" else 0,
-            "ground_slope": 0},
+            "ground_slope": 0, "pivot": None},
         "rod": {"scale": .66*k, "angle": 19, "line_length": None,
             "pendant_scale": .66*k, "pendant_angle": -10},
         "timing": {"pickup": duration, "lift": duration, "exit": duration + flight,
@@ -479,7 +479,7 @@ def main():
     q.add_argument("input"); q.add_argument("--out", required=True); q.add_argument("--start", type=float, required=True)
     q.add_argument("--duration", type=float, required=True); q.add_argument("--width", type=int, default=720)
     q.add_argument("--variant", choices=["auto", *RODS], default="auto"); q.add_argument("--state-dir")
-    q.add_argument("--motion", choices=["lift", "drag"], default="lift")
+    q.add_argument("--motion", choices=["lift", "low_lift", "drag"], default="lift")
     for name in ("matte", "track", "preview", "render", "complete"):
         q = sub.add_parser(name); q.add_argument("project")
         if name == "render":

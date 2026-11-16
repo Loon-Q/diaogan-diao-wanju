@@ -1,5 +1,5 @@
 {
-  "version": "0.2.1",
+  "version": "0.3.0",
   "files": [
     {
       "path": ".gitignore",
@@ -8,13 +8,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "87df256fcbb2b8a82dbb85606f39cbc997a04ca8825d9cf0e04c30f068de3df8",
-      "bytes": 3195
+      "sha256": "f7bf1a686d1cc0f2719b59ee09ce05adb8c0fa64a2b466a03ea5520e32aaadc0",
+      "bytes": 3388
     },
     {
       "path": "VALIDATION.md",
-      "sha256": "00042a58e97cbc6781a003911abf75ac4e6464de810876d03d4638874212d8e5",
-      "bytes": 2636
+      "sha256": "f2e0ddf335e6df0f676f7a4fd0a5e499be6dec1b8171bd21a7cf920b4288ef90",
+      "bytes": 3940
     },
     {
       "path": "install.py",
@@ -23,8 +23,8 @@
     },
     {
       "path": "skills/fishing-gif/SKILL.md",
-      "sha256": "015ca58c2aac56440e21b214d90d10908dc43e01b7a68f855e3ac1af57a04b4a",
-      "bytes": 5435
+      "sha256": "d91afa3ec03c468517b1c69c8f6b44c9ea8a368314c639b042a71ceccf1cdee1",
+      "bytes": 5931
     },
     {
       "path": "skills/fishing-gif/agents/openai.yaml",
@@ -98,13 +98,13 @@
     },
     {
       "path": "skills/fishing-gif/references/project-config.md",
-      "sha256": "38ad3d1c7a439bcc653fa251ef294cf0eb37e25f08c12a2be0874a0f5f6af3e6",
-      "bytes": 4901
+      "sha256": "987a15142d59ea1080246581b3b10a70b971ccbf9ecb854d0c4de74ef7199364",
+      "bytes": 6653
     },
     {
       "path": "skills/fishing-gif/references/workflow.md",
-      "sha256": "ad2fb77315663a1abca3ebf8d899fb68eedd683f02817b64c18cb05ca49e2284",
-      "bytes": 2989
+      "sha256": "b78aeab31e32b2ccdf435ae6e78a2c7410d7e913fa81e605769d64b468bff53b",
+      "bytes": 3189
     },
     {
       "path": "skills/fishing-gif/requirements.txt",
@@ -113,8 +113,8 @@
     },
     {
       "path": "skills/fishing-gif/scripts/fishing_gif.py",
-      "sha256": "eb5bc9cfed864c62d2c03c7f467cf94e69920f8c3596f14237630d2b2ed1a7c0",
-      "bytes": 24535
+      "sha256": "c24db221f75c567d17faeeb1e7b36bd4dcfe4824c5f919e5472fcae4d854276a",
+      "bytes": 24562
     },
     {
       "path": "skills/fishing-gif/scripts/rotation.py",
@@ -128,13 +128,13 @@
     },
     {
       "path": "skills/fishing-gif/scripts/scene.py",
-      "sha256": "a501c03f27031af19aa9c783fb0d3944ead44e10879dd604d2e51e3949716ef7",
-      "bytes": 14728
+      "sha256": "2793e766d15598ea828bf06093814353dff2ea5597a03e6f1eafbbe208cb8a4f",
+      "bytes": 17204
     },
     {
       "path": "tests/test_workflow.py",
-      "sha256": "c453c35956e8aaa26e05534401441632389a411395d3e796d83252364a690c9f",
-      "bytes": 12512
+      "sha256": "00f5e978923f30c72b703b61b47557a575f8603c23b8ac206b0413563b5d90e5",
+      "bytes": 13872
     }
   ]
 }
