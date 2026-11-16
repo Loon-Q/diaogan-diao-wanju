@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "files": [
     {
       "path": ".gitignore",
@@ -8,13 +8,13 @@
     },
     {
       "path": "README.md",
-      "sha256": "26e7377fef35c49d26c24d5f6da6f5990a530beda83eba0563749309e1633018",
-      "bytes": 2934
+      "sha256": "87df256fcbb2b8a82dbb85606f39cbc997a04ca8825d9cf0e04c30f068de3df8",
+      "bytes": 3195
     },
     {
       "path": "VALIDATION.md",
-      "sha256": "30bdc0fb7077cdeac19c7f6fd9b7d568bed75ca2f968ed5e51eee48c280a7302",
-      "bytes": 2170
+      "sha256": "00042a58e97cbc6781a003911abf75ac4e6464de810876d03d4638874212d8e5",
+      "bytes": 2636
     },
     {
       "path": "install.py",
@@ -23,8 +23,8 @@
     },
     {
       "path": "skills/fishing-gif/SKILL.md",
-      "sha256": "bbf33f59cc6afb2296a7c73243359f28bf0f56bcb66222bad4a80efa6b862666",
-      "bytes": 4654
+      "sha256": "015ca58c2aac56440e21b214d90d10908dc43e01b7a68f855e3ac1af57a04b4a",
+      "bytes": 5435
     },
     {
       "path": "skills/fishing-gif/agents/openai.yaml",
@@ -98,8 +98,8 @@
     },
     {
       "path": "skills/fishing-gif/references/project-config.md",
-      "sha256": "a75f3922d28405bbc9e5bf63f842a880e7a056a94b14bbee338f0d5390e7b8db",
-      "bytes": 3866
+      "sha256": "38ad3d1c7a439bcc653fa251ef294cf0eb37e25f08c12a2be0874a0f5f6af3e6",
+      "bytes": 4901
     },
     {
       "path": "skills/fishing-gif/references/workflow.md",
